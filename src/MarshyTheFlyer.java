@@ -2,16 +2,14 @@
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
+import java.io.*;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Random;
-import javax.sound.sampled.*;
-import javax.swing.*;
-import java.io.*;
-import java.sql.Clob;
 import java.util.Scanner;
 import javax.imageio.ImageIO;
-
+import javax.sound.sampled.*;
+import javax.swing.*;
 
 public class MarshyTheFlyer extends JPanel implements ActionListener, KeyListener {
 
@@ -24,7 +22,7 @@ public class MarshyTheFlyer extends JPanel implements ActionListener, KeyListene
 // Theme state
     int currentTheme = 0; // 0 for Default, 1 for Night/Alt
 //High Score
-   String highScoreFile = "highscore.txt";
+    String highScoreFile = "highscore.txt";
 // marshy bird
     int birdX = boardHeight / 8;
     int birdY = boardHeight / 2;
@@ -32,18 +30,20 @@ public class MarshyTheFlyer extends JPanel implements ActionListener, KeyListene
     int birdHeight = 33;
 
 // marshy accessories
-int GAME = 0;
-int accMenu = 1;
-int currentState = GAME;
+    int GAME = 0;
+    int accMenu = 1;
+    int currentState = GAME;
 
-BufferedImage[] hats;
-int hatIndex = 0;
-boolean hatSelected = false;
+    BufferedImage[] hats;
+    int hatIndex = 0;
+    boolean hatSelected = false;
+
+    int totalHats = 5;
+    int[] hatUnlockScore = {0, 5, 10, 15, 20};
 
 // size for menu display
-int birdW = 43;
-int birdH = 33;
-
+    int birdW = 43;
+    int birdH = 33;
 
     class Bird {
 
@@ -93,7 +93,7 @@ int birdH = 33;
         setPreferredSize(new Dimension(boardWidth, boardHeight));
         setFocusable(true);
         addKeyListener(this);
-        setLayout(null); 
+        setLayout(null);
 
 // 1. Setting up Theme Button
         themeButton = new JButton("Switch Theme");
@@ -105,70 +105,80 @@ int birdH = 33;
         styleThemeButton();
 
 // Accesories Menu
+        setLayout(null); // allows button positioning
+        hatSelected = false;
 
-    setLayout(null); // allows button positioning
+        ImageIcon originalIcon = new ImageIcon(getClass().getResource("/magic.png"));
+        Image scaledImg = originalIcon.getImage().getScaledInstance(30, 30, Image.SCALE_SMOOTH);
+        ImageIcon hatIcon = new ImageIcon(scaledImg);
 
-ImageIcon originalIcon = new ImageIcon(getClass().getResource("/magic.png"));
-Image scaledImg = originalIcon.getImage().getScaledInstance(30, 30, Image.SCALE_SMOOTH);
-ImageIcon hatIcon = new ImageIcon(scaledImg);
+        JButton accButton = new JButton(hatIcon);
+        accButton.setBounds(10, 10, 40, 40);
 
-JButton accButton = new JButton(hatIcon);
-accButton.setBounds(10, 10, 40, 40);
+        accButton.setBorderPainted(false);
+        accButton.setContentAreaFilled(false);
+        accButton.setFocusPainted(false);
 
-accButton.setBorderPainted(false);
-accButton.setContentAreaFilled(false);
-accButton.setFocusPainted(false);
+        add(accButton);
 
-add(accButton);
+        accButton.addActionListener(e -> {
+            currentState = accMenu;
+            hatSelected = true;
+            requestFocusInWindow();
+            repaint();
+        });
 
-    accButton.addActionListener(e -> {
-        currentState = accMenu;
-        requestFocusInWindow();
-        repaint();
-    });
+        add(accButton);
 
-    add(accButton);
+        addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent e) {
 
-    addMouseListener(new MouseAdapter() {
-    public void mouseClicked(MouseEvent e) {
-     
+                if (currentState == accMenu) {
 
-        if (currentState == accMenu) {
+                    int x = e.getX();
+                    int y = e.getY();
 
-            int x = e.getX();
-            int y = e.getY();
+                    int cx = getWidth() / 2;
+                    int cy = getHeight() / 2;
 
-            int cx = getWidth() / 2;
-            int cy = getHeight() / 2;
+                    // ⬅️ LEFT arrow
+                    if (x > cx - 100 && x < cx - 40
+                            && y > cy - 40 && y < cy + 40) {
 
-            // ⬅️ LEFT arrow
-            if (x > cx - 100 && x < cx - 40 &&
-                y > cy - 40 && y < cy + 40) {
+                        hatIndex = (hatIndex - 1 + hats.length) % hats.length;
+                        if (highscore >= hatUnlockScore[hatIndex]) {
+                            hatSelected = true;
+                        } else {
+                            hatSelected = false;
+                        }
+                        repaint();
+                    }
 
-                hatIndex = (hatIndex - 1 + hats.length) % hats.length;
-                repaint();
+                    // ➡️ RIGHT arrow
+                    if (x > cx + 40 && x < cx + 100
+                            && y > cy - 40 && y < cy + 40) {
+                        hatSelected = true;
+                        hatIndex = (hatIndex + 1) % hats.length;
+
+                        if (highscore >= hatUnlockScore[hatIndex]) {
+                            hatSelected = true;
+                        } else {
+                            hatSelected = false;
+                        }
+                        repaint();
+                    }
+
+                    //  BACK button
+                    if (x > getWidth() - 50 && x < getWidth() - 10 && y > 10 && y < 50) {
+
+                        currentState = GAME;
+                        repaint();
+                    }
+                }
             }
-
-            // ➡️ RIGHT arrow
-            if (x > cx + 40 && x < cx + 100 &&
-                y > cy - 40 && y < cy + 40) {
-                hatSelected = true;
-                hatIndex = (hatIndex + 1) % hats.length;
-                repaint();
-            }
-
-                //  BACK button
-        if (x > getWidth() - 50 && x < getWidth() - 10 && y > 10 && y < 50) {
-
-    currentState = GAME;
-    repaint();
-}
-        }
-    }
-});
+        });
 
 //  Loading Initial Assets
-
         loadAssets();
         loadHighScore();
         playMusic(currentTheme == 0 ? "/bgm.wav" : "/bgm2.wav");
@@ -178,19 +188,17 @@ add(accButton);
         gameLoop = new Timer(1000 / 60, this);
 
         try {
-       hats = new BufferedImage[5];
+            hats = new BufferedImage[5];
 
-    hats[0] = ImageIO.read(getClass().getResource("/cap.png"));
-    hats[1] = ImageIO.read(getClass().getResource("/glasses.png"));
-    hats[2] = ImageIO.read(getClass().getResource("/crown.png"));
-    hats[3] = ImageIO.read(getClass().getResource("/wicked.png"));
-    hats[4] = ImageIO.read(getClass().getResource("/magic.png"));
+            hats[0] = ImageIO.read(getClass().getResource("/cap.png"));
+            hats[1] = ImageIO.read(getClass().getResource("/glasses.png"));
+            hats[2] = ImageIO.read(getClass().getResource("/crown.png"));
+            hats[3] = ImageIO.read(getClass().getResource("/wicked.png"));
+            hats[4] = ImageIO.read(getClass().getResource("/magic.png"));
 
-
-
-} catch (Exception e) {
-    e.printStackTrace();
-}
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private void loadAssets() {
@@ -211,24 +219,22 @@ add(accButton);
         }
     }
 
-
     private void styleThemeButton() {
-        themeButton.setFont(new Font("Comic Sans MS",Font.BOLD,12));
+        themeButton.setFont(new Font("Comic Sans MS", Font.BOLD, 12));
         themeButton.setFocusPainted(false);
         themeButton.setBorderPainted(false);
         themeButton.setOpaque(true);
 
-        if(currentTheme == 0) {
-            themeButton.setBackground(new Color(255,255,255));
-            themeButton.setForeground(new Color(0,0,0));
+        if (currentTheme == 0) {
+            themeButton.setBackground(new Color(255, 255, 255));
+            themeButton.setForeground(new Color(0, 0, 0));
         } else {
-            themeButton.setBackground(new Color(30,30,60));
-            themeButton.setForeground(new Color(0,255,255));
+            themeButton.setBackground(new Color(30, 30, 60));
+            themeButton.setForeground(new Color(0, 255, 255));
         }
 
     }
 
-    
     private void switchTheme() {
         currentTheme = (currentTheme == 0) ? 1 : 0;
         loadAssets();
@@ -272,54 +278,65 @@ add(accButton);
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
         if (currentState == GAME) {
-        draw(g);
-       } else if (currentState == accMenu) {
-        drawAccessoryMenu(g);
+            draw(g);
+        } else if (currentState == accMenu) {
+            drawAccessoryMenu(g);
+        }
     }
-    }
 
+    int[] hatOffset = {13, 22, 6, 12, 7};
 
-    int[] hatOffset = {13,22,6,12,7};
+    int[] hatOffsetX = {7, 4, 3, 5, 2};
 
-    int[] hatOffsetX = {7,4,3,5,2};
+    int[] hatHeight = {22, 22, 22, 26, 20};
 
-    int[] hatHeight = {22,22,22,26,20};
+    void drawAccessoryMenu(Graphics g) {
 
-void drawAccessoryMenu(Graphics g) {
+        g.drawImage(bgImg, 0, 0, boardWidth, boardHeight, null);
 
-g.drawImage(bgImg, 0, 0, boardWidth,boardHeight,null);
-
-int cx = (getWidth() - birdW) / 2;
-int cy = (getHeight() - birdH) / 2;
+        int cx = (getWidth() - birdW) / 2;
+        int cy = (getHeight() - birdH) / 2;
 
 // bird
-g.drawImage(birdImg, cx, cy, birdW, birdH, null);
+        g.drawImage(birdImg, cx, cy, birdW, birdH, null);
 
 // hat
-int hatW = birdW-4;
-int hatH = hatHeight[hatIndex];
-int hatX = cx+ hatOffsetX[hatIndex];
+        int hatW = birdW - 4;
+        int hatH = hatHeight[hatIndex];
+        int hatX = cx + hatOffsetX[hatIndex];
 
-g.drawImage(hats[hatIndex],
-        hatX,
-        cy - hatH + hatOffset[hatIndex],
-        hatW,
-        hatH,
-        null);
+        g.drawImage(hats[hatIndex],
+                hatX,
+                cy - hatH + hatOffset[hatIndex],
+                hatW,
+                hatH,
+                null);
 
         // arrows
-g.setFont(new Font("Arial", Font.BOLD, 40));
+        g.setFont(new Font("Arial", Font.BOLD, 40));
 
-int dx = getWidth() / 2;
-int dy = getHeight() / 2;
+        int dx = getWidth() / 2;
+        int dy = getHeight() / 2;
 
-g.drawString("<", dx - 80, dy + 10); // left
-g.drawString(">", dx + 60, dy + 10); // right
+        g.drawString("<", dx - 80, dy + 10); // left
+        g.drawString(">", dx + 60, dy + 10); // right
 
-g.setFont(new Font("Arial", Font.BOLD, 30));
-g.setColor(Color.BLACK);
-g.drawString("X", getWidth() - 40, 40);
-}
+        g.setFont(new Font("Arial", Font.BOLD, 30));
+        g.setColor(Color.YELLOW);
+        g.drawString("X", getWidth() - 40, 40);
+
+        g.setFont(new Font("Comic Sans MS", Font.BOLD, 20));
+
+        String text = "Hat " + (hatIndex + 1) + "/" + totalHats;
+        g.setColor(Color.YELLOW);
+        g.drawString(text, getWidth() / 2 - 50, 100);
+
+        if (highscore < hatUnlockScore[hatIndex]) {
+            g.setColor(Color.RED);
+            g.setFont(new Font("Comic Sans MS", Font.BOLD, 18));
+            g.drawString("LOCKED", getWidth() / 2 - 40, cy + 100);
+        }
+    }
 
 // Drawing everything on screen
     public void draw(Graphics g) {
@@ -327,20 +344,21 @@ g.drawString("X", getWidth() - 40, 40);
         g.drawImage(bird.img, bird.x, bird.y, bird.width, bird.height, null);
 
 //  draw hat on bird
-if (hatSelected) {
-    int hatH = hatHeight[hatIndex];
-    int hatW = bird.width-4;
+        if (hatSelected && highscore >= hatUnlockScore[hatIndex]) {
+            int hatH = hatHeight[hatIndex];
+            int hatW = bird.width - 4;
 
-    int hatX = bird.x + hatOffsetX[hatIndex];
-    int hatY = bird.y - hatH + hatOffset[hatIndex];
+            int hatX = bird.x + hatOffsetX[hatIndex];
+            int hatY = bird.y - hatH + hatOffset[hatIndex];
 
-    g.drawImage(hats[hatIndex],
-        hatX,
-        hatY,   // adjust if needed
-        hatW,
-        hatH,
-        null);
-}
+            g.drawImage(hats[hatIndex],
+                    hatX,
+                    hatY, // adjust if needed
+                    hatW,
+                    hatH,
+                    null);
+
+        }
 
         for (Pipe pipe : pipes) {
             Image pImg = (pipe.y < 0) ? topImg : bottomImg;
@@ -351,13 +369,13 @@ if (hatSelected) {
             g.setColor(new Color(0, 255, 255)); // Cyan for score
         } else {
 
-            g.setColor(Color.BLACK); 
+            g.setColor(Color.BLACK);
         }
         g.setFont(new Font("Comic Sans MS", Font.BOLD, 32));
         g.drawString(String.valueOf((int) score), 20, 80);
         if (gameOver) {
             drawCenteredString(g, "GAME OVER", 40, boardHeight / 2 - 50, true);
-            drawCenteredString(g, "Score: " + (int)score, 24, boardHeight / 2, false);
+            drawCenteredString(g, "Score: " + (int) score, 24, boardHeight / 2, false);
             drawCenteredString(g, "High Score: " + highscore, 24, boardHeight / 2 + 40, false);
             drawCenteredString(g, "Press SPACE to Restart", 18, boardHeight / 2 + 90, false);
         } else if (paused) {
@@ -366,7 +384,7 @@ if (hatSelected) {
 
         } else if (!gameStarted) {
             drawCenteredString(g, "MARSHY THE FLYER", 30, boardHeight / 2 - 40, true);
-            drawCenteredString(g, "Press SPACE to Start", 18, boardHeight / 2 - 9 , false);
+            drawCenteredString(g, "Press SPACE to Start", 18, boardHeight / 2 - 9, false);
         }
     }
 
@@ -380,7 +398,7 @@ if (hatSelected) {
         g.drawString(text, x + 2, y + 2);
 // Main Text Color based on theme
         if (currentTheme == 1) {
-            g.setColor(isTitle ? new Color(255, 215, 0) : Color.WHITE); 
+            g.setColor(isTitle ? new Color(255, 215, 0) : Color.WHITE);
         } else {
             g.setColor(Color.YELLOW); // Default theme color
         }
@@ -406,37 +424,35 @@ if (hatSelected) {
         if (bird.y > boardHeight) {
             gameOver = true;
         }
-       if(score>7) {
-        velocityX= -6;
-       }
-       if(score>15) {
-        velocityX = -8;
-        placePipesTimer.setDelay(1300);
-       }
-       if(score>21) {
-        velocityX = -9;
-        placePipesTimer.setDelay(1100);
-            
-      }
+        if (score > 10) {
+            velocityX = -6;
+        }
+        if (score > 15) {
+            velocityX = -8;
+            placePipesTimer.setDelay(1300);
+        }
+        if (score > 21) {
+            velocityX = -9;
+            placePipesTimer.setDelay(1100);
+
+        }
     }
 
     //Load High Score
-
     public void loadHighScore() {
         try {
             File file = new File(highScoreFile);
-            if(!file.exists()){
+            if (!file.exists()) {
                 file.createNewFile();
                 highscore = 0;
                 return;
             }
             Scanner scan = new Scanner(file);
-            if(scan.hasNextInt()) {
+            if (scan.hasNextInt()) {
                 highscore = scan.nextInt();
-            scan.close();
-        }
-        }
-        catch(Exception e) {
+                scan.close();
+            }
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
@@ -447,7 +463,7 @@ if (hatSelected) {
             FileWriter writer = new FileWriter(highScoreFile);
             writer.write(String.valueOf(highscore));
             writer.close();
-            
+
         } catch (Exception e) {
             System.out.println("Can't save high score");
         }
