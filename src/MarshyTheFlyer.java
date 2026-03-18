@@ -109,7 +109,7 @@ public class MarshyTheFlyer extends JPanel implements ActionListener, KeyListene
         hatSelected = false;
 
         ImageIcon originalIcon = new ImageIcon(getClass().getResource("/magic.png"));
-        Image scaledImg = originalIcon.getImage().getScaledInstance(30, 30, Image.SCALE_SMOOTH);
+        Image scaledImg = originalIcon.getImage().getScaledInstance(40, 30, Image.SCALE_SMOOTH);
         ImageIcon hatIcon = new ImageIcon(scaledImg);
 
         JButton accButton = new JButton(hatIcon);
@@ -141,7 +141,7 @@ public class MarshyTheFlyer extends JPanel implements ActionListener, KeyListene
                     int cx = getWidth() / 2;
                     int cy = getHeight() / 2;
 
-                    // ⬅️ LEFT arrow
+                    // LEFT arrow
                     if (x > cx - 100 && x < cx - 40
                             && y > cy - 40 && y < cy + 40) {
 
@@ -154,7 +154,7 @@ public class MarshyTheFlyer extends JPanel implements ActionListener, KeyListene
                         repaint();
                     }
 
-                    // ➡️ RIGHT arrow
+                    // RIGHT arrow
                     if (x > cx + 40 && x < cx + 100
                             && y > cy - 40 && y < cy + 40) {
                         hatSelected = true;
@@ -314,6 +314,7 @@ public class MarshyTheFlyer extends JPanel implements ActionListener, KeyListene
 
         // arrows
         g.setFont(new Font("Arial", Font.BOLD, 40));
+        
 
         int dx = getWidth() / 2;
         int dy = getHeight() / 2;
