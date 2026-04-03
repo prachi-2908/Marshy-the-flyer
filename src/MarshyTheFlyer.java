@@ -92,6 +92,7 @@ public class MarshyTheFlyer extends JPanel implements ActionListener, KeyListene
     public MarshyTheFlyer() {
         setPreferredSize(new Dimension(boardWidth, boardHeight));
         setFocusable(true);
+        requestFocusInWindow();
         addKeyListener(this);
         setLayout(null);
 
@@ -192,7 +193,7 @@ public class MarshyTheFlyer extends JPanel implements ActionListener, KeyListene
 
             hats[0] = ImageIO.read(getClass().getResource("/cap.png"));
             hats[1] = ImageIO.read(getClass().getResource("/glasses.png"));
-            hats[2] = ImageIO.read(getClass().getResource("/crown.png"));
+            hats[2] = ImageIO.read(getClass().getResource("/bowhat.png"));
             hats[3] = ImageIO.read(getClass().getResource("/wicked.png"));
             hats[4] = ImageIO.read(getClass().getResource("/magic.png"));
 
@@ -245,6 +246,7 @@ public class MarshyTheFlyer extends JPanel implements ActionListener, KeyListene
         }
         playMusic(currentTheme == 0 ? "/bgm.wav" : "/bgm2.wav");
         repaint();
+        this.requestFocusInWindow();
     }
 
     public void playMusic(String soundFile) {
@@ -284,11 +286,11 @@ public class MarshyTheFlyer extends JPanel implements ActionListener, KeyListene
         }
     }
 
-    int[] hatOffset = {13, 22, 6, 12, 7};
+    int[] hatOffset = {13, 22, 13, 12, 7};
 
-    int[] hatOffsetX = {7, 4, 3, 5, 2};
+    int[] hatOffsetX = {7, 4, 5, 7, 2};
 
-    int[] hatHeight = {22, 22, 22, 26, 20};
+    int[] hatHeight = {22, 22, 24, 28, 24};
 
     void drawAccessoryMenu(Graphics g) {
 
@@ -322,15 +324,26 @@ public class MarshyTheFlyer extends JPanel implements ActionListener, KeyListene
         g.drawString("<", dx - 80, dy + 10); // left
         g.drawString(">", dx + 60, dy + 10); // right
 
+
+        int a = getWidth() / 2 + 141;
+        int b = 40;
+
         g.setFont(new Font("Arial", Font.BOLD, 30));
-        g.setColor(Color.YELLOW);
+        g.setColor(new Color(0, 0, 0, 150)); 
+        g.drawString("X", a + 2, b + 2);
+        g.setColor(Color.WHITE);
         g.drawString("X", getWidth() - 40, 40);
 
         g.setFont(new Font("Comic Sans MS", Font.BOLD, 20));
+        String text = "Gear " + (hatIndex + 1) + "/" + totalHats;
+        int x = getWidth() / 2 - 50;
+        int y = 100;
 
-        String text = "Hat " + (hatIndex + 1) + "/" + totalHats;
+        g.setColor(new Color(0, 0, 0, 150)); 
+        g.drawString(text, x + 2, y + 2);
         g.setColor(Color.YELLOW);
         g.drawString(text, getWidth() / 2 - 50, 100);
+
 
         if (highscore < hatUnlockScore[hatIndex]) {
             g.setColor(Color.RED);
@@ -383,7 +396,8 @@ public class MarshyTheFlyer extends JPanel implements ActionListener, KeyListene
             drawCenteredString(g, "PAUSED", 40, boardHeight / 2 - 20, true);
             drawCenteredString(g, "Press P to Resume", 18, boardHeight / 2 + 30, false);
 
-        } else if (!gameStarted) {
+        }
+         else if (!gameStarted) {
             drawCenteredString(g, "MARSHY THE FLYER", 30, boardHeight / 2 - 40, true);
             drawCenteredString(g, "Press SPACE to Start", 18, boardHeight / 2 - 9, false);
         }
